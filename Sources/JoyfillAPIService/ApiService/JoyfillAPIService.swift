@@ -13,7 +13,8 @@ enum JoyfillAPI {
     case templates(identifier: String? = nil)
     case groups(identifier: String? = nil)
     case users(identifier: String? = nil)
-    case saveForm(identifier: String? = nil)
+    case saveChangelog(identifier: String? = nil)
+    case saveDocument(identifier: String? = nil)
     case convertPDFToPNGs
     
     var endPoint: URL {
@@ -40,8 +41,10 @@ enum JoyfillAPI {
             return URL(string: "\(Constants.usersBaseURL)?&page=1&limit=25")!
         case .convertPDFToPNGs:
             return URL(string: "\(Constants.documentsBaseURL)?&page=1&limit=25")!
-        case .saveForm(identifier: let identifier):
-            return URL(string: "\(Constants.saveFormBaseURL)/\(identifier)")!
+        case .saveChangelog(identifier: let identifier):
+            return URL(string: "\(Constants.saveFormBaseURL)/\(identifier!)/changelogs")!
+        case .saveDocument(identifier: let identifier):
+            return URL(string: "\(Constants.saveFormBaseURL)/\(identifier!)")!
         }
     }
 }
@@ -55,6 +58,7 @@ public class APIService {
     
     private func urlRequest(type: JoyfillAPI, method: String? = nil, httpBody: Data? = nil) -> URLRequest {
         var request = URLRequest(url: type.endPoint)
+//        guard let url = URL(string: "\(baseURL)/\(identifier)/changelogs") else {
         request.httpMethod = method ?? "GET"
         request.httpBody = httpBody
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
@@ -243,27 +247,6 @@ public class APIService {
         }
     }
     
-    public func updateDocumentChangelogs(identifier: String, docChangeLogs: Any, completion: @escaping (Result<Any, Error>) -> Void) {
-        do {
-            let jsonData = try JSONSerialization.data(withJSONObject: docChangeLogs, options: [])
-            let request = urlRequest(type: .saveForm(identifier: identifier), method: "POST", httpBody: jsonData)
-            makeAPICall(with: request) { data, response, error in
-                if let error = error {
-                    completion(.failure(error))
-                } else if let data = data {
-                    do {
-                        let json = try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])
-                        completion(.success(json))
-                    } catch {
-                        completion(.failure(error))
-                    }
-                }
-            }
-        } catch {
-            completion(.failure(error))
-        }
-    }
-    
     public func createDocumentSubmission(identifier: String, completion: @escaping (Result<Any, Error>) -> Void) {
         self.fetchJoyDoc(identifier: identifier) { [self] joyDocJSON in
             createDocument(joyDocJSON: joyDocJSON, identifier: identifier) { result in
@@ -282,7 +265,7 @@ public class APIService {
         let data = try! joyDocJSON.get() as! Data
         
         var dictionaryObject = try! JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-
+        
         // We remove some of the uneeded keys, specifically changing the "type" to "document"
         dictionaryObject?.removeValue(forKey: "_id")
         dictionaryObject?.removeValue(forKey: "createdOn")
@@ -314,6 +297,49 @@ public class APIService {
             }
         }
         .resume()
+    }
+    
+    public func updateDocument(identifier: String, changeLogs: Changelog, completion: @escaping (Result<Any, Error>) -> Void) {
+        do {
+            let jsonData = try JSONEncoder().encode(changeLogs)
+            let request = urlRequest(type: .saveChangelog(identifier: identifier), method: "POST", httpBody: jsonData)
+            makeAPICall(with: request) { data, response, error in
+                if let error = error {
+                    completion(.failure(error))
+                } else if let data = data {
+                    do {
+                        let json = try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])
+                        completion(.success(json))
+                    } catch {
+                        completion(.failure(error))
+                    }
+                }
+            }
+        } catch {
+            completion(.failure(error))
+        }
+    }
+    
+    public func updateDocument(identifier: String, document: JoyDoc, completion: @escaping (Result<Any, Error>) -> Void) {
+        do {
+            let updateDocument = UpdateDocument(files: document.files, fields: document.fields)
+            let jsonData = try JSONEncoder().encode(document)
+            let request = urlRequest(type: .saveDocument(identifier: identifier), method: "POST", httpBody: jsonData)
+            makeAPICall(with: request) { data, response, error in
+                if let error = error {
+                    completion(.failure(error))
+                } else if let data = data {
+                    do {
+                        let json = try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed])
+                        completion(.success(json))
+                    } catch {
+                        completion(.failure(error))
+                    }
+                }
+            }
+        } catch {
+            completion(.failure(error))
+        }
     }
 }
 

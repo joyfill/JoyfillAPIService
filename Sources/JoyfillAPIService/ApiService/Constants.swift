@@ -14,7 +14,7 @@ struct Constants {
     static let templatesBaseURL = "\(baseURL)/templates"
     static let groupsBaseURL = "\(baseURL)/groups"
     static let usersBaseURL = "\(baseURL)/users"
-    static let saveFormBaseURL = "\(baseURL)/changelogs"
+    static let saveFormBaseURL = "\(documentsBaseURL)"
     
     // See https://docs.joyfill.io/docs/authentication#user-access-tokens
     static var userAccessToken = ""
