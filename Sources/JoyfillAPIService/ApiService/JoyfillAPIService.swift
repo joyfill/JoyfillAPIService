@@ -139,19 +139,13 @@ public class APIService {
     }
     
     public func loadImage(from urlString: String, completion: @escaping (Data?) -> Void) {
-        if urlString.hasPrefix("data:") {
-            if let commaIndex = urlString.range(of: ",")?.upperBound {
-                let base64String = String(urlString[commaIndex...])
-                if let data = Data(base64Encoded: base64String) {
-                    completion(data)
-                    return
-                }
-            }
-            completion(nil)
+        let base64String = String(urlString)
+        if let data = Data(base64Encoded: base64String) {
+            completion(data)
             return
         }
         
-        guard let url = URL(string: urlString) else {
+        guard let url = URL(string: base64String) else {
             completion(nil)
             return
         }
