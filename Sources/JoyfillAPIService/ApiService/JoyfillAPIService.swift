@@ -316,8 +316,11 @@ public class APIService {
     
     public func updateDocument(identifier: String, document: JoyDoc, completion: @escaping (Result<Any, Error>) -> Void) {
         do {
-            let updateDocument = UpdateDocument(files: document.files, fields: document.fields)
-            let jsonData = try JSONEncoder().encode(document)
+            let updateDocumentDict = [
+                "files": document.files.compactMap({ $0.dictionary}),
+                "fields": document.fields.compactMap({ $0.dictionary})
+            ]
+            let jsonData = try JSONSerialization.data(withJSONObject: updateDocumentDict, options: .prettyPrinted)
             let request = urlRequest(type: .saveDocument(identifier: identifier), method: "POST", httpBody: jsonData)
             makeAPICall(with: request) { data, response, error in
                 if let error = error {
