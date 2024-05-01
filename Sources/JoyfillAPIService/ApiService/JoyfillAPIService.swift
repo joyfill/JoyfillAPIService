@@ -318,7 +318,7 @@ public class APIService {
         do {
             let updateDocumentDict = [
                 "files": document.files.compactMap({ $0.dictionary}),
-                "fields": document.fields.compactMap({ $0.value?.dictonary})
+                "fields": document.fields.compactMap({ $0.value?.dictionary})
             ]
             let jsonData = try JSONSerialization.data(withJSONObject: updateDocumentDict, options: .prettyPrinted)
             let request = urlRequest(type: .saveDocument(identifier: identifier), method: "POST", httpBody: jsonData)
