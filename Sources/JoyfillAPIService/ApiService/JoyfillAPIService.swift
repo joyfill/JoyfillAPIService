@@ -293,9 +293,9 @@ public class APIService {
         .resume()
     }
     
-    public func updateDocument(identifier: String, changeLogs: Changelog, completion: @escaping (Result<Any, Error>) -> Void) {
+    public func updateDocument(identifier: String, changeLogs: [String: Any], completion: @escaping (Result<Any, Error>) -> Void) {
         do {
-            let jsonData = try JSONEncoder().encode(changeLogs)
+            let jsonData = try JSONSerialization.data(withJSONObject: changeLogs, options: .fragmentsAllowed)
             let request = urlRequest(type: .saveChangelog(identifier: identifier), method: "POST", httpBody: jsonData)
             makeAPICall(with: request) { data, response, error in
                 if let error = error {
@@ -316,8 +316,11 @@ public class APIService {
     
     public func updateDocument(identifier: String, document: JoyDoc, completion: @escaping (Result<Any, Error>) -> Void) {
         do {
-            let updateDocument = UpdateDocument(files: document.files, fields: document.fields)
-            let jsonData = try JSONEncoder().encode(document)
+            let updateDocumentDict = [
+                "files": document.files.compactMap({ $0.dictionary}),
+                "fields": document.fields.compactMap({ $0.dictionary})
+            ]
+            let jsonData = try JSONSerialization.data(withJSONObject: updateDocumentDict, options: .prettyPrinted)
             let request = urlRequest(type: .saveDocument(identifier: identifier), method: "POST", httpBody: jsonData)
             makeAPICall(with: request) { data, response, error in
                 if let error = error {
