@@ -122,19 +122,38 @@ public class APIService {
         }
     }
     
+//    public func fetchJoyDoc(identifier: String, completion: @escaping (Result<Data, Error>) -> Void) {
+//
+//        let request = urlRequest(type: .documents(identifier: identifier))
+//        makeAPICall(with: request) { data, response, error in
+//            if let data = data, error == nil {
+//                DispatchQueue.main.async {
+//                    completion(.success(data))
+//                }
+//            } else {
+//                DispatchQueue.main.async {
+//                    completion(.failure(error ?? APIError.unknownError))
+//                }
+//            }
+//        }
+//    }
+    
     public func fetchJoyDoc(identifier: String, completion: @escaping (Result<Data, Error>) -> Void) {
-
-        let request = urlRequest(type: .documents(identifier: identifier))
-        makeAPICall(with: request) { data, response, error in
-            if let data = data, error == nil {
-                DispatchQueue.main.async {
-                    completion(.success(data))
-                }
-            } else {
-                DispatchQueue.main.async {
-                    completion(.failure(error ?? APIError.unknownError))
-                }
-            }
+        // Locate the JSON file in the app bundle
+        guard let url = Bundle.main.url(forResource: "testrow", withExtension: "json") else {
+//            completion(.failure(APIError.fileNotFound)) // Custom error if the file isn't found
+            return
+        }
+        
+        do {
+            // Load the data from the file
+            let data = try Data(contentsOf: url)
+            
+            // Decode the data into your DocumentListResponse model
+//            let documents = try JSONDecoder().decode(Document.self, from: data)
+            completion(.success(data))
+        } catch {
+            completion(.failure(error)) // Handle decoding or file read errors
         }
     }
     
