@@ -16,49 +16,51 @@ enum JoyfillAPI {
     case saveChangelog(identifier: String? = nil)
     case saveDocument(identifier: String? = nil)
     case convertPDFToPNGs
-    
-    var endPoint: URL {
+
+    func endPoint(baseURL: String) -> URL {
         switch self {
         case .documents(identifier: let identifier):
             if let identifier = identifier {
-                return URL(string: "\(Constants.documentsBaseURL)/\(identifier)")!
+                return URL(string: "\(baseURL)/documents/\(identifier)")!
             }
-            return URL(string: "\(Constants.documentsBaseURL)?&page=1&limit=25")!
+            return URL(string: "\(baseURL)/documents?&page=1&limit=25")!
         case .templates(identifier: let identifier):
             if let identifier = identifier {
-                return URL(string: "\(Constants.templatesBaseURL)?template=\(identifier)&page=1&limit=25")!
+                return URL(string: "\(baseURL)/templates?template=\(identifier)&page=1&limit=25")!
             }
-            return URL(string: "\(Constants.templatesBaseURL)?&page=1&limit=25")!
+            return URL(string: "\(baseURL)/templates?&page=1&limit=25")!
         case .groups(identifier: let identifier):
             if let identifier = identifier {
-                return URL(string: "\(Constants.groupsBaseURL)/\(identifier)")!
+                return URL(string: "\(baseURL)/groups/\(identifier)")!
             }
-            return URL(string: "\(Constants.groupsBaseURL)?&page=1&limit=25")!
+            return URL(string: "\(baseURL)/groups?&page=1&limit=25")!
         case .users(identifier: let identifier):
             if let identifier = identifier {
-                return URL(string: "\(Constants.usersBaseURL)/\(identifier)")!
+                return URL(string: "\(baseURL)/users\(identifier)")!
             }
-            return URL(string: "\(Constants.usersBaseURL)?&page=1&limit=25")!
+            return URL(string: "\(baseURL)/users?&page=1&limit=25")!
         case .convertPDFToPNGs:
-            return URL(string: "\(Constants.documentsBaseURL)?&page=1&limit=25")!
+            return URL(string: "\(baseURL)/documents?&page=1&limit=25")!
         case .saveChangelog(identifier: let identifier):
-            return URL(string: "\(Constants.saveFormBaseURL)/\(identifier!)/changelogs")!
+            return URL(string: "\(baseURL)/documents/\(identifier!)/changelogs")!
         case .saveDocument(identifier: let identifier):
-            return URL(string: "\(Constants.saveFormBaseURL)/\(identifier!)")!
+            return URL(string: "\(baseURL)/documents/\(identifier!)")!
         }
     }
 }
 
 public class APIService {
     private let accessToken: String
-    
-    public init() {
-        self.accessToken = Constants.userAccessToken
+    private let baseURL: String
+
+
+    public init(accessToken: String, baseURL: String) {
+        self.accessToken = accessToken
+        self.baseURL = baseURL
     }
     
     private func urlRequest(type: JoyfillAPI, method: String? = nil, httpBody: Data? = nil) -> URLRequest {
-        var request = URLRequest(url: type.endPoint)
-//        guard let url = URL(string: "\(baseURL)/\(identifier)/changelogs") else {
+        var request = URLRequest(url: type.endPoint(baseURL: self.baseURL))
         request.httpMethod = method ?? "GET"
         request.httpBody = httpBody
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
@@ -250,7 +252,7 @@ public class APIService {
     }
     
     public func createDocument(joyDocJSON: Result<Data, any Error>, identifier: String, completion: @escaping (Result<Any, Error>) -> Void) {
-        guard let url = URL(string: "\(Constants.documentsBaseURL)") else {
+        guard let url = URL(string: "\(baseURL)/documents") else {
             completion(.failure(APIError.invalidURL))
             return
         }
