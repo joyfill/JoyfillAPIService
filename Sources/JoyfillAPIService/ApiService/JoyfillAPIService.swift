@@ -23,24 +23,24 @@ enum JoyfillAPI {
             if let identifier = identifier {
                 return URL(string: "\(baseURL)/documents/\(identifier)")!
             }
-            return URL(string: "\(baseURL)/documents?&page=1&limit=25")!
+            return URL(string: "\(baseURL)/documents?&page=1&limit=100")!
         case .templates(identifier: let identifier):
             if let identifier = identifier {
-                return URL(string: "\(baseURL)/templates?template=\(identifier)&page=1&limit=25")!
+                return URL(string: "\(baseURL)/templates?template=\(identifier)&page=1&limit=100")!
             }
-            return URL(string: "\(baseURL)/templates?&page=1&limit=25")!
+            return URL(string: "\(baseURL)/templates?&page=1&limit=100")!
         case .groups(identifier: let identifier):
             if let identifier = identifier {
                 return URL(string: "\(baseURL)/groups/\(identifier)")!
             }
-            return URL(string: "\(baseURL)/groups?&page=1&limit=25")!
+            return URL(string: "\(baseURL)/groups?&page=1&limit=100")!
         case .users(identifier: let identifier):
             if let identifier = identifier {
                 return URL(string: "\(baseURL)/users\(identifier)")!
             }
-            return URL(string: "\(baseURL)/users?&page=1&limit=25")!
+            return URL(string: "\(baseURL)/users?&page=1&limit=100")!
         case .convertPDFToPNGs:
-            return URL(string: "\(baseURL)/documents?&page=1&limit=25")!
+            return URL(string: "\(baseURL)/documents?&page=1&limit=100")!
         case .saveChangelog(identifier: let identifier):
             return URL(string: "\(baseURL)/documents/\(identifier!)/changelogs")!
         case .saveDocument(identifier: let identifier):
@@ -52,7 +52,6 @@ enum JoyfillAPI {
 public class APIService {
     private let accessToken: String
     private let baseURL: String
-
 
     public init(accessToken: String, baseURL: String) {
         self.accessToken = accessToken
@@ -91,7 +90,6 @@ public class APIService {
     }
     
     public func fetchDocumentSubmissions(identifier: String, completion: @escaping (Result<[Document], Error>) -> Void) {
-                
         let request = urlRequest(type: .documents(identifier: identifier))
         makeAPICall(with: request) { data, response, error in
             if let data = data, error == nil {
@@ -280,7 +278,7 @@ public class APIService {
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        makeAPICall(with: request) { data, response, error in
             if let error = error {
                 completion(.failure(error))
             } else if let data = data {
@@ -292,7 +290,6 @@ public class APIService {
                 }
             }
         }
-        .resume()
     }
     
     public func updateDocument(identifier: String, changeLogs: [String: Any], completion: @escaping (Result<Any, Error>) -> Void) {
