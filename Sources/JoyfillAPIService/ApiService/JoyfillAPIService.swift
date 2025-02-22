@@ -9,26 +9,32 @@ import Combine
 import JoyfillModel
 
 enum JoyfillAPI {
-    case documents(identifier: String? = nil)
-    case templates(identifier: String? = nil)
+    case documents(identifier: String? = nil, page: Int = 1, limit: Int = 10)
+    case templates(identifier: String? = nil, page: Int = 1, limit: Int = 10)
+    case submissiondocuments(identifier: String? = nil)
     case groups(identifier: String? = nil)
     case users(identifier: String? = nil)
     case saveChangelog(identifier: String? = nil)
     case saveDocument(identifier: String? = nil)
     case convertPDFToPNGs
-
+    
     func endPoint(baseURL: String) -> URL {
         switch self {
-        case .documents(identifier: let identifier):
+        case .documents(identifier: let identifier, page: let page, limit: let limit):
+            if let identifier = identifier {
+                return URL(string: "\(baseURL)/documents?template=\(identifier)&page=\(page)&limit=\(limit)")!
+            }
+            return URL(string: "\(baseURL)/documents?page=\(page)&limit=\(limit)")!
+        case .submissiondocuments(identifier: let identifier):
             if let identifier = identifier {
                 return URL(string: "\(baseURL)/documents/\(identifier)")!
             }
-            return URL(string: "\(baseURL)/documents?&page=1&limit=100")!
-        case .templates(identifier: let identifier):
+            return URL(string: "\(baseURL)/documents?page=1&limit=100")!
+        case .templates(identifier: let identifier, page: let page, limit: let limit):
             if let identifier = identifier {
-                return URL(string: "\(baseURL)/templates?template=\(identifier)&page=1&limit=100")!
+                return URL(string: "\(baseURL)/templates?template=\(identifier)&page=\(page)&limit=\(limit)")!
             }
-            return URL(string: "\(baseURL)/templates?&page=1&limit=100")!
+            return URL(string: "\(baseURL)/templates?page=\(page)&limit=\(limit)")!
         case .groups(identifier: let identifier):
             if let identifier = identifier {
                 return URL(string: "\(baseURL)/groups/\(identifier)")!
@@ -52,7 +58,7 @@ enum JoyfillAPI {
 public class APIService {
     private let accessToken: String
     private let baseURL: String
-
+    
     public init(accessToken: String, baseURL: String) {
         self.accessToken = accessToken
         self.baseURL = baseURL
@@ -72,8 +78,8 @@ public class APIService {
             .resume()
     }
     
-    public func fetchDocuments(completion: @escaping (Result<[Document], Error>) -> Void) {
-        let request = urlRequest(type: .documents())
+    public func fetchDocuments(identifier: String, page: Int = 1, limit: Int = 10, completion: @escaping (Result<[Document], Error>) -> Void) {
+        let request = urlRequest(type: .documents(identifier: identifier, page: page, limit: limit))
         makeAPICall(with: request) { data, response, error in
             
             if let data = data, error == nil {
@@ -90,7 +96,7 @@ public class APIService {
     }
     
     public func fetchDocumentSubmissions(identifier: String, completion: @escaping (Result<[Document], Error>) -> Void) {
-        let request = urlRequest(type: .documents(identifier: identifier))
+        let request = urlRequest(type: .submissiondocuments())
         makeAPICall(with: request) { data, response, error in
             if let data = data, error == nil {
                 do {
@@ -105,8 +111,8 @@ public class APIService {
         }
     }
     
-    public func fetchTemplates(completion: @escaping (Result<[Document], Error>) -> Void) {
-        let request = urlRequest(type: .templates())
+    public func fetchTemplates(page: Int = 1, limit: Int = 10, completion: @escaping (Result<[Document], Error>) -> Void) {
+        let request = urlRequest(type: .templates(page: page, limit: limit))
         makeAPICall(with: request) { data, response, error in
             if let data = data, error == nil {
                 do {
@@ -123,8 +129,8 @@ public class APIService {
     }
     
     public func fetchJoyDoc(identifier: String, completion: @escaping (Result<Data, Error>) -> Void) {
-
-        let request = urlRequest(type: .documents(identifier: identifier))
+        
+        let request = urlRequest(type: .submissiondocuments(identifier: identifier))
         makeAPICall(with: request) { data, response, error in
             if let data = data, error == nil {
                 DispatchQueue.main.async {
